@@ -710,46 +710,128 @@ Audit-related information can help track:
 
 # 📸 Screenshots & Evidence
 
-Project screenshots and API testing evidence are available in the:
+The repository includes both **frontend UI evidence** and **Postman API testing evidence**.
 
-```text
-screenshots/
-```
+## 🖥️ Frontend & Application Screenshots
 
-directory.
+### 🏠 Application & Authentication
 
-The screenshots cover:
+<p align="center">
+  <img src="screenshots/01_home_logged_in.png" width="48%" alt="VELoop CAPTCHA Earn home screen" />
+  <img src="screenshots/02_create_account.png" width="48%" alt="Create account screen" />
+</p>
 
-### 🖥️ Frontend / UI Evidence
-
-- Home screen
-- Account creation
-- Login
-- CAPTCHA interaction
-- Correct CAPTCHA reward
-- Reward claimed
-- Wallet
-- GEM transactions
-- Audit logs
-- Security audit logs
-- Wrong CAPTCHA scenario
-- Skip/No Thanks flow
-- Wallet persistence
-
-### 🧪 API Testing Evidence
-
-- Postman collection overview
-- Correct CAPTCHA verification
-- Reward claim
-- Wallet balance
-- GEM transactions
-- Unauthorized access
-- Invalid JWT
-- Duplicate claim
-- Invalid CAPTCHA option
-- Missing selected option
+<p align="center">
+  <img src="screenshots/13_login.png" width="48%" alt="Login screen" />
+  <img src="screenshots/14_wallet_persistence.png" width="48%" alt="Wallet persistence screen" />
+</p>
 
 ---
+
+### 🧩 CAPTCHA & Reward Flow
+
+<p align="center">
+  <img src="screenshots/03_correct_captcha_reward.png" width="48%" alt="Correct CAPTCHA reward UI" />
+  <img src="screenshots/04_reward_claimed.png" width="48%" alt="Reward claimed UI" />
+</p>
+
+<p align="center">
+  <img src="screenshots/11_wrong_captcha_reward.png" width="48%" alt="Wrong CAPTCHA reward scenario" />
+  <img src="screenshots/12_no_thanks_new_challenge.png" width="48%" alt="Skip or no-thanks new challenge flow" />
+</p>
+
+---
+
+### 💎 Wallet, Transactions & Monitoring
+
+<p align="center">
+  <img src="screenshots/05_gem_transaction_history.png" width="48%" alt="GEM transaction history" />
+  <img src="screenshots/07_wallet.png" width="48%" alt="Wallet UI" />
+</p>
+
+<p align="center">
+  <img src="screenshots/08_gem_transaction.png" width="48%" alt="GEM transaction UI" />
+  <img src="screenshots/09_audit_logs.png" width="48%" alt="Audit logs" />
+</p>
+
+<p align="center">
+  <img src="screenshots/10_security_audit_logs.png" width="48%" alt="Security audit logs" />
+  <img src="screenshots/06_api_network_flow.png" width="48%" alt="API network flow" />
+</p>
+
+---
+
+## 🧪 Postman API Testing Evidence
+
+### 📦 Collection Overview
+
+<p align="center">
+  <img src="screenshots/15_postman_collection.png" width="90%" alt="Postman collection overview" />
+</p>
+
+### ✅ Successful CAPTCHA Verification
+
+<p align="center">
+  <img src="screenshots/16_correct_captcha_reward.png" width="90%" alt="Successful CAPTCHA verification in Postman" />
+</p>
+
+### 🎁 Reward Claim
+
+<p align="center">
+  <img src="screenshots/17_claim_reward.png" width="90%" alt="Reward claim API response" />
+</p>
+
+### 💰 Wallet Balance
+
+<p align="center">
+  <img src="screenshots/18_wallet_balance.png" width="90%" alt="Wallet balance API response" />
+</p>
+
+### 📜 GEM Transactions
+
+<p align="center">
+  <img src="screenshots/19_gem_transactions.png" width="90%" alt="GEM transactions API response" />
+</p>
+
+---
+
+## 🛡️ Security & Negative Testing Evidence
+
+### 🚫 Unauthorized Request
+
+<p align="center">
+  <img src="screenshots/20_unauthorized_generate.png" width="90%" alt="Unauthorized CAPTCHA generation response" />
+</p>
+
+### 🔑 Invalid JWT
+
+<p align="center">
+  <img src="screenshots/21_invalid_jwt.png" width="90%" alt="Invalid JWT response" />
+</p>
+
+### 🔁 Duplicate Claim
+
+<p align="center">
+  <img src="screenshots/22_duplicate_claim.png" width="90%" alt="Duplicate reward claim response" />
+</p>
+
+### ❌ Invalid CAPTCHA Option
+
+<p align="center">
+  <img src="screenshots/23_invalid_option.png" width="90%" alt="Invalid CAPTCHA option response" />
+</p>
+
+### ⚠️ Missing Selected Option
+
+<p align="center">
+  <img src="screenshots/24_missing_selected_option.png" width="90%" alt="Missing selected option response" />
+</p>
+
+---
+
+## 📁 Complete Evidence
+
+All project UI screenshots and API-testing evidence are available in the [`screenshots/`](screenshots/) directory.
 
 # 📁 Documentation
 
@@ -780,7 +862,7 @@ Install the following before running the project:
 ## 1️⃣ Clone the Repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Ashutosh9-pan/Veloop-captcha-earn.git
 ```
 
 Then:
