@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/captcha/generate"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      const data = json.data || json;
+      if (data.challengeId) pm.collectionVariables.set('challengeId', data.challengeId);
+      if (Array.isArray(data.options) && data.options[0]) pm.collectionVariables.set('selectedOption', data.options[0]);
+      pm.test('Exactly 4 options', () => pm.expect(data.options).to.have.lengthOf(4));
+order: 1000

@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/captcha/claim"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "challengeId": "{{challengeId}}"
+    }
+order: 4000

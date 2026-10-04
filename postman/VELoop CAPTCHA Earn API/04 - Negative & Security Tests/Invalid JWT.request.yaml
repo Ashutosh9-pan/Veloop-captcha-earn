@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/captcha/generate"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: invalid
+order: 2000

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/captcha/image/{{challengeId}}"
+method: GET
+order: 2000

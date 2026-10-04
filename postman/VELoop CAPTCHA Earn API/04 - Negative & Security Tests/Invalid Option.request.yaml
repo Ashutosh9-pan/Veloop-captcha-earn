@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/captcha/submit"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "challengeId": "{{challengeId}}",
+      "selectedOption": "NOT-ONE-OF-THE-FOUR"
+    }
+order: 4000

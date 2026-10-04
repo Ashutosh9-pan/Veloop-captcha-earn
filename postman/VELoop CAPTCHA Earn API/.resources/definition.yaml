@@ -1,0 +1,15 @@
+$kind: collection
+description: VELoop CAPTCHA Earn API collection. No real JWT, password, MongoDB URI, API key, or other secret is embedded. Set email/password/token variables at runtime.
+variables:
+  baseUrl: http://localhost:5001
+  token: ""
+  email: ""
+  password: ""
+  challengeId: ""
+  selectedOption: ""
+auth:
+  - id: ab14adfb-c5e8-43e8-af75-984641b11283
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"
