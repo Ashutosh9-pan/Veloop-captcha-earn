@@ -179,24 +179,56 @@ const createCaptchaChallenge = async (
   const captchaText =
     generateCaptchaText();
 
-  const options = new Set();
+  // The assignment requires four options:
+  // 1 correct, 2 similar-looking incorrect,
+  // and 1 completely different incorrect option.
+  const createSimilarOption = (original) => {
+    const chars = original.split("");
+    const index = crypto.randomInt(0, chars.length);
+    const current = chars[index];
 
-  // Correct option
-  options.add(captchaText);
-
-  // 3 incorrect options
-  while (options.size < 4) {
-    const wrongOption =
-      generateCaptchaText();
-
-    if (!options.has(wrongOption)) {
-      options.add(wrongOption);
+    let replacement = current;
+    while (replacement === current) {
+      replacement =
+        CHARACTERS[
+          crypto.randomInt(0, CHARACTERS.length)
+        ];
     }
-  }
+
+    chars[index] = replacement;
+    return chars.join("");
+  };
+
+  const createDifferentOption = (original) => {
+    const chars = original.split("");
+
+    for (let i = 0; i < chars.length; i++) {
+      const current = chars[i];
+      let replacement = current;
+
+      while (replacement === current) {
+        replacement =
+          CHARACTERS[
+            crypto.randomInt(0, CHARACTERS.length)
+          ];
+      }
+
+      chars[i] = replacement;
+    }
+
+    return chars.join("");
+  };
+
+  const similarOne = createSimilarOption(captchaText);
+  const similarTwo = createSimilarOption(captchaText);
+  const different = createDifferentOption(captchaText);
 
   const shuffledOptions =
     shuffleOptions([
-      ...options,
+      captchaText,
+      similarOne,
+      similarTwo,
+      different,
     ]);
 
   const challengeId =
