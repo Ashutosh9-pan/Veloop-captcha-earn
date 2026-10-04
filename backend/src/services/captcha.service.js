@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 
 const CaptchaChallenge = require("../models/CaptchaChallenge");
+const CaptchaAttempt = require("../models/CaptchaAttempt");
 const Wallet = require("../models/Wallet");
 const GemTransaction = require("../models/GemTransaction");
 const CaptchaRewardConfig = require("../models/CaptchaRewardConfig");
@@ -451,250 +452,260 @@ const verifyCaptchaChallenge = async (
   userId,
   selectedOption
 ) => {
-  if (
-    !challengeId ||
-    !userId ||
-    !selectedOption
-  ) {
+  if (!challengeId || !userId || !selectedOption) {
     return {
       success: false,
       code: "VALIDATION_ERROR",
-      message:
-        "Challenge ID, user ID and selected option are required",
+      message: "Challenge ID, user ID and selected option are required",
     };
   }
 
-  const challenge =
-    await CaptchaChallenge.findOne({
-      challengeId,
-      userId,
-    }).select(
-      "+captchaText +correctOption"
-    );
+  const session = await mongoose.startSession();
 
-  if (!challenge) {
-    await createAuditLog({ action: "INVALID_ATTEMPT", userId, challengeId, status: "FAILED", message: "CAPTCHA challenge not found" });
-    return {
-      success: false,
-      code: "CHALLENGE_NOT_FOUND",
-      message:
-        "CAPTCHA challenge not found",
-    };
-  }
+  try {
+    let result;
 
-  // -----------------------------------------
-  // Replay protection
-  // -----------------------------------------
-
-  if (
-    challenge.status !== "active"
-  ) {
-    await createAuditLog({
-      action: "DUPLICATE_ATTEMPT",
-      userId,
-      challengeId,
-      status: "BLOCKED",
-      message: "CAPTCHA challenge replay/duplicate verification attempt",
-      metadata: { challengeStatus: challenge.status, rewardStatus: challenge.rewardStatus },
-    });
-    return {
-      success: false,
-      code:
-        "CHALLENGE_ALREADY_COMPLETED",
-      message:
-        "CAPTCHA challenge is no longer active",
-    };
-  }
-
-  // -----------------------------------------
-  // Expiry protection
-  // -----------------------------------------
-
-  if (
-    challenge.expiresAt < new Date()
-  ) {
-    challenge.status =
-      "expired";
-
-    challenge.rewardStatus =
-      "none";
-
-    await challenge.save();
-    await createAuditLog({ action: "EXPIRED_CHALLENGE", userId, challengeId: challenge.challengeId, status: "BLOCKED", message: "CAPTCHA challenge expired during verification" });
-
-    return {
-      success: false,
-      code:
-        "CHALLENGE_EXPIRED",
-      message:
-        "CAPTCHA challenge has expired",
-    };
-  }
-
-  // -----------------------------------------
-  // Validate selected option
-  // -----------------------------------------
-  // The client is allowed to submit only one of the
-  // four options issued for this challenge. Arbitrary
-  // values must never be treated as a wrong answer,
-  // because that could incorrectly award the wrong-answer
-  // reward for an invalid request.
-  const normalizedSelectedOption = String(
-    selectedOption
-  ).trim().toUpperCase();
-
-  const normalizedOptions = Array.isArray(
-    challenge.options
-  )
-    ? challenge.options.map((option) =>
-        String(option).trim().toUpperCase()
-      )
-    : [];
-
-  if (
-    !normalizedOptions.includes(
-      normalizedSelectedOption
-    )
-  ) {
-    console.warn(
-      "Invalid CAPTCHA option submitted:",
-      {
+    await session.withTransaction(async () => {
+      const challenge = await CaptchaChallenge.findOne({
         challengeId,
-        userId: String(userId),
+        userId,
+      })
+        .select("+captchaText +correctOption")
+        .session(session);
+
+      if (!challenge) {
+        await createAuditLog({
+          action: "INVALID_ATTEMPT",
+          userId,
+          challengeId,
+          status: "FAILED",
+          message: "CAPTCHA challenge not found",
+          session,
+        });
+
+        result = {
+          success: false,
+          code: "CHALLENGE_NOT_FOUND",
+          message: "CAPTCHA challenge not found",
+        };
+        return;
       }
-    );
 
-    await createAuditLog({ action: "INVALID_ATTEMPT", userId, challengeId, status: "FAILED", message: "Selected option is not one of the issued CAPTCHA options", metadata: { selectedOption: normalizedSelectedOption } });
-    await createAuditLog({ action: "SUSPICIOUS_REQUEST", userId, challengeId, status: "BLOCKED", message: "Invalid CAPTCHA option submitted", metadata: { selectedOption: normalizedSelectedOption } });
+      const now = new Date();
 
-    return {
-      success: false,
-      code: "INVALID_OPTION",
-      message:
-        "Selected option is not valid for this CAPTCHA challenge",
-    };
-  }
+      if (challenge.status !== "active") {
+        await createAuditLog({
+          action: "DUPLICATE_ATTEMPT",
+          userId,
+          challengeId,
+          status: "BLOCKED",
+          message: "CAPTCHA challenge replay/duplicate verification attempt",
+          metadata: {
+            challengeStatus: challenge.status,
+            rewardStatus: challenge.rewardStatus,
+          },
+          session,
+        });
 
-  // Use the normalized value for the actual comparison
-  // while preserving the original challenge data.
-  selectedOption = normalizedSelectedOption;
+        result = {
+          success: false,
+          code: "CHALLENGE_ALREADY_COMPLETED",
+          message: "CAPTCHA challenge is no longer active",
+        };
+        return;
+      }
 
-  // -----------------------------------------
-  // Get backend reward configuration
-  // -----------------------------------------
-
-  const rewardConfig =
-    await getActiveRewardConfig();
-
-  // -----------------------------------------
-  // Compare server-side correct answer
-  // -----------------------------------------
-
-  const isCorrect =
-    String(
-      selectedOption
-    ).toUpperCase() ===
-    String(
-      challenge.correctOption
-    ).toUpperCase();
-
-  // -----------------------------------------
-  // Reward is controlled by backend config
-  // -----------------------------------------
-
-  const rewardAmount =
-    isCorrect
-      ? Number(
-          rewardConfig.correctReward
-        )
-      : Number(
-          rewardConfig.wrongReward
+      if (challenge.expiresAt <= now) {
+        await CaptchaChallenge.updateOne(
+          {
+            _id: challenge._id,
+            status: "active",
+          },
+          {
+            $set: {
+              status: "expired",
+              rewardStatus: "none",
+            },
+          },
+          { session }
         );
 
-  challenge.selectedOption =
-    selectedOption;
+        await createAuditLog({
+          action: "EXPIRED_CHALLENGE",
+          userId,
+          challengeId: challenge.challengeId,
+          status: "BLOCKED",
+          message: "CAPTCHA challenge expired during verification",
+          session,
+        });
 
-  challenge.completedAt =
-    new Date();
+        result = {
+          success: false,
+          code: "CHALLENGE_EXPIRED",
+          message: "CAPTCHA challenge has expired",
+        };
+        return;
+      }
 
-  challenge.status =
-    "completed";
+      const normalizedSelectedOption = String(selectedOption)
+        .trim()
+        .toUpperCase();
 
-  challenge.result =
-    isCorrect
-      ? "correct"
-      : "wrong";
+      const normalizedOptions = Array.isArray(challenge.options)
+        ? challenge.options.map((option) =>
+            String(option).trim().toUpperCase()
+          )
+        : [];
 
-  // Store the reward determined by the
-  // backend at verification time.
-  challenge.rewardAmount =
-    rewardAmount;
+      if (!normalizedOptions.includes(normalizedSelectedOption)) {
+        await createAuditLog({
+          action: "INVALID_ATTEMPT",
+          userId,
+          challengeId,
+          status: "FAILED",
+          message: "Selected option is not one of the issued CAPTCHA options",
+          metadata: { selectedOption: normalizedSelectedOption },
+          session,
+        });
 
-  // Reward remains pending until Claim.
-  challenge.rewardStatus =
-    "pending";
+        await createAuditLog({
+          action: "SUSPICIOUS_REQUEST",
+          userId,
+          challengeId,
+          status: "BLOCKED",
+          message: "Invalid CAPTCHA option submitted",
+          metadata: { selectedOption: normalizedSelectedOption },
+          session,
+        });
 
-  await challenge.save();
+        result = {
+          success: false,
+          code: "INVALID_OPTION",
+          message: "Selected option is not valid for this CAPTCHA challenge",
+        };
+        return;
+      }
 
-  await createAuditLog({
-    action: "CHALLENGE_VERIFIED",
-    userId,
-    challengeId: challenge.challengeId,
-    result: isCorrect ? "CORRECT" : "WRONG",
-    rewardAmount,
-    status: "SUCCESS",
-    message: isCorrect ? "CAPTCHA verified successfully" : "CAPTCHA verified with an incorrect answer",
-    metadata: { rewardStatus: challenge.rewardStatus },
-  });
+      const rewardConfig = await getActiveRewardConfig();
 
-  await createAuditLog({
-    action: "REWARD_CREATED",
-    userId,
-    challengeId: challenge.challengeId,
-    referenceId: challenge.challengeId,
-    result: isCorrect ? "CORRECT" : "WRONG",
-    rewardAmount,
-    status: "SUCCESS",
-    message: "CAPTCHA reward created and marked pending",
-    metadata: { currency: rewardConfig.currency },
-  });
+      const isCorrect =
+        normalizedSelectedOption ===
+        String(challenge.correctOption).trim().toUpperCase();
 
-  return {
-    success: true,
+      const rewardAmount = isCorrect
+        ? Number(rewardConfig.correctReward)
+        : Number(rewardConfig.wrongReward);
 
-    code:
-      "CAPTCHA_VERIFIED",
+      // Atomic state transition: only one concurrent request can move
+      // this challenge from active -> completed.
+      const completedChallenge =
+        await CaptchaChallenge.findOneAndUpdate(
+          {
+            _id: challenge._id,
+            userId,
+            status: "active",
+            expiresAt: { $gt: new Date() },
+          },
+          {
+            $set: {
+              selectedOption: normalizedSelectedOption,
+              completedAt: new Date(),
+              status: "completed",
+              result: isCorrect ? "correct" : "wrong",
+              rewardAmount,
+              rewardStatus: "pending",
+            },
+          },
+          {
+            returnDocument: "after",
+            session,
+          }
+        );
 
-    correct:
-      isCorrect,
+      if (!completedChallenge) {
+        await createAuditLog({
+          action: "DUPLICATE_ATTEMPT",
+          userId,
+          challengeId,
+          status: "BLOCKED",
+          message: "Concurrent verification lost the atomic state transition",
+          session,
+        });
 
-    result:
-      isCorrect
-        ? "CORRECT"
-        : "WRONG",
+        result = {
+          success: false,
+          code: "CHALLENGE_ALREADY_COMPLETED",
+          message: "CAPTCHA challenge is no longer active",
+        };
+        return;
+      }
 
-    message:
-      isCorrect
-        ? "CAPTCHA verified successfully"
-        : "That answer wasn't correct",
-
-    reward: {
-      currency:
-        rewardConfig.currency ===
-        "GEM"
-          ? "GEMS"
-          : rewardConfig.currency,
-
-      amount:
+      const attempt = {
+        attemptId: crypto.randomUUID(),
+        challengeId: completedChallenge._id,
+        userId,
+        selectedOption: normalizedSelectedOption,
+        result: isCorrect ? "correct" : "wrong",
         rewardAmount,
-    },
+        rewardStatus: "pending",
+      };
 
-    challengeId:
-      challenge.challengeId,
+      await CaptchaAttempt.create([attempt], { session });
 
-    claimAvailable:
-      true,
-  };
+      await createAuditLog({
+        action: "CHALLENGE_VERIFIED",
+        userId,
+        challengeId: completedChallenge.challengeId,
+        result: isCorrect ? "CORRECT" : "WRONG",
+        rewardAmount,
+        status: "SUCCESS",
+        message: isCorrect
+          ? "CAPTCHA verified successfully"
+          : "CAPTCHA verified with an incorrect answer",
+        metadata: {
+          rewardStatus: completedChallenge.rewardStatus,
+          attemptId: attempt.attemptId,
+        },
+        session,
+      });
+
+      await createAuditLog({
+        action: "REWARD_CREATED",
+        userId,
+        challengeId: completedChallenge.challengeId,
+        referenceId: completedChallenge.challengeId,
+        result: isCorrect ? "CORRECT" : "WRONG",
+        rewardAmount,
+        status: "SUCCESS",
+        message: "CAPTCHA reward created and marked pending",
+        metadata: { currency: rewardConfig.currency },
+        session,
+      });
+
+      result = {
+        success: true,
+        code: "CAPTCHA_VERIFIED",
+        correct: isCorrect,
+        result: isCorrect ? "CORRECT" : "WRONG",
+        message: isCorrect
+          ? "CAPTCHA verified successfully"
+          : "That answer wasn't correct",
+        reward: {
+          currency:
+            rewardConfig.currency === "GEM"
+              ? "GEMS"
+              : rewardConfig.currency,
+          amount: rewardAmount,
+        },
+        challengeId: completedChallenge.challengeId,
+        claimAvailable: true,
+      };
+    });
+
+    return result;
+  } finally {
+    await session.endSession();
+  }
 };
 
 // -----------------------------------------
@@ -948,6 +959,20 @@ const claimCaptchaReward = async (
           metadata: { balanceBefore, balanceAfter, transactionId },
           session,
         });
+
+        await CaptchaAttempt.updateMany(
+          {
+            challengeId: challenge._id,
+            userId,
+            rewardStatus: "pending",
+          },
+          {
+            $set: {
+              rewardStatus: "credited",
+            },
+          },
+          { session }
+        );
 
         // -----------------------------------
         // Final result
