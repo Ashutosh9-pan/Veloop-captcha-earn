@@ -39,6 +39,22 @@
     {
       "key": "selectedOption",
       "value": ""
+    },
+    {
+      "key": "secondToken",
+      "value": ""
+    },
+    {
+      "key": "secondChallengeId",
+      "value": ""
+    },
+    {
+      "key": "wrongOption",
+      "value": ""
+    },
+    {
+      "key": "expiredChallengeId",
+      "value": ""
     }
   ],
   "item": [
@@ -483,6 +499,401 @@
               }
             }
           }
+        },
+        {
+          "name": "Fake Reward",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/captcha/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "captcha",
+                "submit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{challengeId}}\",\n  \"selectedOption\": \"{{selectedOption}}\",\n  \"rewardAmount\": 9999\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "description": "Sends a forged rewardAmount. The backend must calculate the reward from its own configuration and ignore this client-controlled value.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Request is processed without trusting fake reward', () => pm.expect(pm.response.code).to.be.oneOf([200,400,409,410]));",
+                  "pm.test('Backend returns a reward object when verification succeeds', () => { if (pm.response.code === 200) pm.expect(data.reward).to.exist; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fake isCorrect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/captcha/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "captcha",
+                "submit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{challengeId}}\",\n  \"selectedOption\": \"{{wrongOption}}\",\n  \"isCorrect\": true\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "description": "Set wrongOption to one of the issued options before running. The forged isCorrect=true field must not make a wrong answer correct.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Backend does not trust client isCorrect', () => pm.expect(pm.response.code).to.be.oneOf([200,400,409,410]));",
+                  "pm.test('Forged isCorrect does not appear as an authoritative field', () => { if (pm.response.code === 200) pm.expect(data).to.not.have.property('isCorrect'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fake User ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/captcha/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "captcha",
+                "submit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{challengeId}}\",\n  \"selectedOption\": \"{{selectedOption}}\",\n  \"userId\": \"000000000000000000000000\"\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "description": "Adds a forged userId. The backend must continue using the authenticated JWT identity and challenge ownership.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('Backend ignores client-controlled userId', () => pm.expect(pm.response.code).to.be.oneOf([200,400,409,410]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Expired Challenge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/captcha/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "captcha",
+                "submit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{expiredChallengeId}}\",\n  \"selectedOption\": \"{{selectedOption}}\"\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "description": "Set expiredChallengeId to a challenge that has passed its 5-minute expiry. This request should return HTTP 410.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Expired challenge is rejected', () => pm.expect(pm.response.code).to.equal(410));",
+                  "pm.test('Correct expiry error code', () => pm.expect(data.code).to.equal('CHALLENGE_EXPIRED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong User Challenge",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{secondToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/captcha/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "captcha",
+                "submit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{challengeId}}\",\n  \"selectedOption\": \"{{selectedOption}}\"\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "description": "Requires secondToken to belong to a different user. Use a challenge created by the first user. The authenticated identity must control access, not a request-body userId.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Cross-user challenge is rejected', () => pm.expect(pm.response.code).to.be.oneOf([404,409,410]));",
+                  "pm.test('No successful verification for another user challenge', () => pm.expect(data.success).to.not.equal(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/captcha/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "captcha",
+                "submit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeId\": \"{{challengeId}}\",\n  \"selectedOption\": \"{{selectedOption}}\"\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "description": "Run this immediately after a successful verification of the same challenge.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Completed challenge cannot be verified again', () => pm.expect(pm.response.code).to.equal(409));",
+                  "pm.test('Correct duplicate-verification error code', () => pm.expect(data.code).to.equal('CHALLENGE_ALREADY_COMPLETED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Concurrent Verification (10 Requests)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            }
+          },
+          "description": "Sends 10 parallel verification requests for the same challenge using pm.sendRequest. Run against a fresh active challenge only. Inspect Postman Console; expected behavior is that only one request can transition the challenge from active to completed, while the others are rejected.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const token = pm.collectionVariables.get('token');",
+                  "const challengeId = pm.collectionVariables.get('challengeId');",
+                  "const selectedOption = pm.collectionVariables.get('selectedOption');",
+                  "if (!token || !challengeId || !selectedOption) throw new Error('Set token, challengeId and selectedOption first.');",
+                  "const url = pm.variables.replaceIn('{{baseUrl}}/api/captcha/submit');",
+                  "for (let i = 0; i < 10; i++) {",
+                  "  pm.sendRequest({",
+                  "    url,",
+                  "    method: 'POST',",
+                  "    header: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},",
+                  "    body: {mode:'raw',raw: JSON.stringify({challengeId, selectedOption}), options:{raw:{language:'json'}}}",
+                  "  }, (err, res) => {",
+                  "    if (err) console.log(`Concurrent verification ${i+1}: ERROR`, err);",
+                  "    else console.log(`Concurrent verification ${i+1}: HTTP ${res.code}`, res.json());",
+                  "  });",
+                  "}",
+                  "console.log('Started 10 parallel verification requests. Inspect the Postman Console for the response distribution. Expected: 1 success + remaining requests rejected as replay/completed.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('Probe request completed', () => pm.expect(pm.response.code).to.equal(200));",
+                  "console.log('Open Postman Console (View -> Show Postman Console) to inspect the 10 concurrent verification responses.');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rate Limit Probe (Local Only)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            }
+          },
+          "description": "LOCAL-DEVELOPMENT ONLY. The backend currently limits /api traffic to 200 requests per 15 minutes. Do not run this high-volume probe repeatedly against the production deployment.",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const token = pm.collectionVariables.get('token');",
+                  "if (!token) throw new Error('Login first so the generated endpoint requests are authenticated.');",
+                  "const url = pm.variables.replaceIn('{{baseUrl}}/api/captcha/generate');",
+                  "for (let i = 0; i < 205; i++) {",
+                  "  pm.sendRequest({",
+                  "    url, method:'GET', header:{'Authorization':`Bearer ${token}`}",
+                  "  }, (err, res) => {",
+                  "    if (err) console.log(`Rate-limit request ${i+1}: ERROR`, err);",
+                  "    else if (res.code === 429) console.log(`Rate-limit threshold reached at request ${i+1}: HTTP 429`);",
+                  "  });",
+                  "}",
+                  "console.log('Started 205 rate-limit probe requests. Run locally only. Do NOT use this request repeatedly against the live Render service.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('Probe request completed', () => pm.expect(pm.response.code).to.equal(200));",
+                  "console.log('Inspect Postman Console for HTTP 429 responses after the configured 200-request window is exceeded.');"
+                ]
+              }
+            }
+          ]
         }
       ]
     }
