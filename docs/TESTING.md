@@ -652,3 +652,29 @@ Production-scale testing would additionally include:
 - Production monitoring and alert validation
 
 The current test results should therefore be understood as functional and security validation of the local implementation, not a guarantee of production-scale behavior.
+
+
+---
+
+## 17. Final Submission Security Cases
+
+The Postman collection now includes dedicated coverage for the remaining assignment security requirements:
+
+| ID | Test | Expected Result |
+|---|---|---|
+| TC-027 | Fake Reward | Server ignores client-supplied reward amount |
+| TC-028 | Fake isCorrect | Server computes correctness independently |
+| TC-029 | Fake User ID | Server uses authenticated JWT identity |
+| TC-030 | Wrong User Challenge | Cross-user challenge access is rejected |
+| TC-031 | Duplicate Verification | Completed challenge returns `CHALLENGE_ALREADY_COMPLETED` |
+| TC-032 | Concurrent Verification | Only one simultaneous request can complete an active challenge |
+| TC-033 | Expired Challenge | Expired challenge returns `CHALLENGE_EXPIRED` / HTTP 410 |
+| TC-034 | Rate Limit | Requests beyond the configured window are rate limited |
+
+### Execution Notes
+
+- `Fake isCorrect` requires `wrongOption` to be set to one of the issued options.
+- `Wrong User Challenge` requires `secondToken` to belong to a different user.
+- `Expired Challenge` requires an existing challenge that has passed its expiry time.
+- `Concurrent Verification (10 Requests)` runs parallel verification calls and uses the Postman Console for response inspection.
+- `Rate Limit Probe (Local Only)` is intentionally high-volume and should be executed only against a local development server.
