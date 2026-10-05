@@ -4,6 +4,35 @@
 
 VELoop CAPTCHA Earn is an independent full-stack project built to demonstrate practical experience in **REST API development, JWT authentication, CAPTCHA verification, reward management, wallet transactions, validation, security controls, audit logging, and API testing with Postman**.
 
+
+---
+
+# 🌐 Live Deployment
+
+The project is deployed and available for live evaluation.
+
+| Component | Live URL |
+|---|---|
+| 🎨 Frontend | https://veloop-captcha-earn-chi.vercel.app |
+| ⚙️ Backend API | https://veloop-captcha-earn-api-mdg8.onrender.com |
+| ❤️ API Health | https://veloop-captcha-earn-api-mdg8.onrender.com/api/health |
+
+### 🚀 Production Architecture
+
+```text
+🌐 Vercel
+   │
+   │ HTTPS / REST API
+   ▼
+⚙️ Render
+   │
+   │ Mongoose
+   ▼
+🍃 MongoDB Atlas
+```
+
+The frontend uses the `VITE_API_URL` environment variable to connect to the deployed backend. Backend secrets such as the MongoDB connection string and JWT secret remain server-side.
+
 ---
 
 ## ✨ Project Highlights
