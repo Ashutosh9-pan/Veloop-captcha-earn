@@ -1183,3 +1183,98 @@ If you find this project interesting or useful:
 ```
 
 ### ❤️ Built with code, testing, and continuous learning.
+
+
+---
+
+# 📈 Scaling & Anti-Abuse Strategy
+
+For a workload of approximately **100,000 CAPTCHA attempts per day**, the system should scale while preserving reward correctness and preventing replay, duplicate rewards, automated abuse, and inconsistent wallet balances.
+
+### API Scaling
+
+Run multiple stateless Node.js/Express instances behind a load balancer. Authentication remains JWT-based, so requests can be distributed across instances without storing login session state in a single server.
+
+### MongoDB Scaling
+
+Keep strong indexes on challenge ownership/status, wallet ownership, transaction references, and audit history. At larger volumes, use MongoDB replica sets and scale reads where appropriate. For very high write volumes, consider partitioning/sharding strategies based on workload characteristics.
+
+### Atomic State Transitions
+
+Verification should only transition:
+
+```text
+ACTIVE → COMPLETED
+```
+
+when the database update still matches `status=active`. This prevents two simultaneous verification requests from both succeeding.
+
+Claim should similarly require:
+
+```text
+COMPLETED + rewardStatus=pending
+```
+
+before changing the reward to claimed.
+
+### Transactions & Idempotency
+
+A reward claim should atomically update the challenge, wallet, reward ledger, and audit event. A unique constraint on the reward reference prevents duplicate ledger entries even if requests are retried.
+
+### Rate Limiting
+
+Use endpoint-aware rate limits for challenge generation, verification and claim operations. A shared Redis-backed rate limiter becomes useful when multiple API instances must enforce a consistent global limit.
+
+### Redis
+
+Redis can be introduced for:
+
+- distributed rate limiting
+- short-lived abuse counters
+- hot challenge/eligibility metadata where justified
+- temporary anti-bot signals
+
+MongoDB remains the authoritative persistence layer for wallet and reward transactions.
+
+### Queue Architecture
+
+Non-critical asynchronous work such as analytics, audit aggregation, fraud scoring or notification workflows can be moved to a queue so reward APIs remain fast and predictable. The wallet ledger itself should remain transactionally consistent and should not depend on an eventually processed queue message to establish the authoritative balance.
+
+### Fraud & Risk Signals
+
+Track signals such as:
+
+- unusually high CAPTCHA completion rate
+- repeated IP/device patterns
+- abnormal challenge timing
+- high invalid-option rates
+- repeated concurrent/replay attempts
+- sudden wallet growth
+
+Suspicious accounts can receive tighter limits or manual/automated review.
+
+### Monitoring
+
+Monitor:
+
+- request rate and latency
+- HTTP 4xx/5xx rates
+- MongoDB latency
+- transaction failures
+- duplicate-claim conflicts
+- rate-limit events
+- suspicious activity
+- wallet/ledger reconciliation mismatches
+
+### Reward Reconciliation
+
+Periodically compare wallet balances with the sum of valid reward ledger entries and investigate any mismatch. The ledger provides the audit trail required to reconstruct reward history.
+
+The key principle remains:
+
+```text
+Frontend displays the experience.
+Backend owns the truth.
+MongoDB owns persistent reward state.
+Atomic operations prevent duplicate outcomes.
+```
