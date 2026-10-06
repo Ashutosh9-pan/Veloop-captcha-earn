@@ -1143,50 +1143,6 @@ The project brings together **frontend development, backend API engineering, aut
 
 ---
 
-# 👨‍💻 Author
-
-## Ashutosh Panwar
-
-💻 Full-Stack Developer  
-🤖 AI/ML Developer  
-⚙️ Backend & API Development  
-
-VELoop CAPTCHA Earn is an **independent portfolio project** created to demonstrate practical software development, API engineering, authentication, security, testing, and documentation skills.
-
----
-
-# ⭐ Support
-
-If you find this project interesting or useful:
-
-⭐ Star the repository  
-🍴 Explore the source code  
-🧪 Review the Postman API collection  
-📚 Read the project documentation  
-
----
-
-# 🚀 VELoop CAPTCHA Earn
-
-```text
-💡 Build
-   ↓
-⚙️ Engineer
-   ↓
-🧪 Test
-   ↓
-🛡️ Secure
-   ↓
-📚 Document
-   ↓
-🚀 Deliver
-```
-
-### ❤️ Built with code, testing, and continuous learning.
-
-
----
-
 # 📈 Scaling & Anti-Abuse Strategy
 
 For a workload of approximately **100,000 CAPTCHA attempts per day**, the system should scale while preserving reward correctness and preventing replay, duplicate rewards, automated abuse, and inconsistent wallet balances.
@@ -1278,3 +1234,47 @@ Backend owns the truth.
 MongoDB owns persistent reward state.
 Atomic operations prevent duplicate outcomes.
 ```
+
+# 👨‍💻 Author
+
+## Ashutosh Panwar
+
+💻 Full-Stack Developer  
+🤖 AI/ML Developer  
+⚙️ Backend & API Development  
+
+VELoop CAPTCHA Earn is an **independent portfolio project** created to demonstrate practical software development, API engineering, authentication, security, testing, and documentation skills.
+
+---
+
+# ⭐ Support
+
+If you find this project interesting or useful:
+
+⭐ Star the repository  
+🍴 Explore the source code  
+🧪 Review the Postman API collection  
+📚 Read the project documentation  
+
+---
+
+# 🚀 VELoop CAPTCHA Earn
+
+```text
+💡 Build
+   ↓
+⚙️ Engineer
+   ↓
+🧪 Test
+   ↓
+🛡️ Secure
+   ↓
+📚 Document
+   ↓
+🚀 Deliver
+```
+
+### ❤️ Built with code, testing, and continuous learning.
+
+
+---
