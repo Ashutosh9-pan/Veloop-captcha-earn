@@ -679,3 +679,37 @@ Execution notes:
 - Wrong User Challenge used a different authenticated account against another user's challenge and returned `CHALLENGE_NOT_FOUND`.
 - Concurrent Verification sent 10 parallel verification requests for one active challenge; the backend allowed one state transition and rejected the competing requests with `CHALLENGE_ALREADY_COMPLETED`.
 - Rate Limit was verified locally by exceeding the 200-request / 15-minute API limit and observing HTTP 429 responses.
+
+
+## Appendix B — Screenshot Evidence
+
+The repository contains browser/API evidence screenshots for the implemented flows.
+
+| Evidence | Screenshot |
+|---|---|
+| Home / logged-in UI | `screenshots/01_home_logged_in.png` |
+| Create account | `screenshots/02_create_account.png` |
+| Correct CAPTCHA reward | `screenshots/03_correct_captcha_reward.png` |
+| Reward claimed | `screenshots/04_reward_claimed.png` |
+| Gem transaction history | `screenshots/05_gem_transaction_history.png` |
+| API / Network flow | `screenshots/06_api_network_flow.png` |
+| Wallet | `screenshots/07_wallet.png` |
+| Gem transaction | `screenshots/08_gem_transaction.png` |
+| Audit logs | `screenshots/09_audit_logs.png` |
+| Security audit logs | `screenshots/10_security_audit_logs.png` |
+| Wrong CAPTCHA reward | `screenshots/11_wrong_captcha_reward.png` |
+| No Thanks / new challenge | `screenshots/12_no_thanks_new_challenge.png` |
+| Login | `screenshots/13_login.png` |
+| Wallet persistence | `screenshots/14_wallet_persistence.png` |
+| Postman collection | `screenshots/15_postman_collection.png` |
+| Correct CAPTCHA API reward | `screenshots/16_correct_captcha_reward.png` |
+| Claim API | `screenshots/17_claim_reward.png` |
+| Wallet balance API | `screenshots/18_wallet_balance.png` |
+| Gem transactions API | `screenshots/19_gem_transactions.png` |
+| Unauthorized API | `screenshots/20_unauthorized_generate.png` |
+| Invalid JWT | `screenshots/21_invalid_jwt.png` |
+| Duplicate claim | `screenshots/22_duplicate_claim.png` |
+| Invalid option | `screenshots/23_invalid_option.png` |
+| Missing selected option | `screenshots/24_missing_selected_option.png` |
+
+These files are supporting evidence; the actual security tests were also executed in Postman/local development as described above.
