@@ -1592,10 +1592,17 @@ function App() {
               ●{' '}
               {claimLoading
                 ? 'Processing'
-                : verificationState ===
-                  'checking'
+                : challengeLoading
+                ? 'Preparing'
+                : verificationState === 'checking'
                 ? 'Verifying'
-                : 'Active'}
+                : lastResult?.rewardStatus === 'claimed'
+                ? 'Rewarded'
+                : lastResult
+                ? 'Completed'
+                : challengeStarted
+                ? 'Active'
+                : 'Ready'}
             </span>
 
           </div>
