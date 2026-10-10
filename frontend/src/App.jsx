@@ -1607,6 +1607,7 @@ function App() {
             {/* ================================= */}
 
             <div
+              className="captcha-image-frame"
               style={{
                 width:
                   '100%',
@@ -1633,6 +1634,7 @@ function App() {
 
               {captcha?.captchaImage ? (
                 <img
+                  className="captcha-image"
                   src={
                     captcha.captchaImage
                   }
@@ -1679,6 +1681,7 @@ function App() {
 
             {captcha?.expiresAt && (
               <div
+                className="captcha-meta"
                 style={{
                   display:
                     'flex',
@@ -1722,6 +1725,7 @@ function App() {
             {/* ================================= */}
 
             <p
+              className="captcha-instruction"
               style={{
                 marginBottom:
                   '14px',
@@ -1740,6 +1744,7 @@ function App() {
             {/* ================================= */}
 
             <div
+              className="captcha-options-grid"
               style={{
                 display:
                   'grid',
@@ -1771,6 +1776,7 @@ function App() {
 
                   return (
                     <button
+                      className="captcha-option"
                       key={`${option}-${index}`}
                       type="button"
                       onClick={() =>
@@ -1853,6 +1859,7 @@ function App() {
             {verificationState ===
               'checking' && (
               <div
+                className="captcha-checking"
                 style={{
                   marginTop:
                     '12px',
@@ -1925,6 +1932,7 @@ function App() {
               verificationState ===
                 'result' && (
               <div
+                className="captcha-result"
                 style={{
                   marginTop:
                     '14px',
@@ -2069,6 +2077,7 @@ function App() {
                 {lastResult.rewardStatus ===
                   'pending' && (
                   <div
+                    className="captcha-action-row"
                     style={{
                       display:
                         'grid',
@@ -2082,6 +2091,7 @@ function App() {
                   >
 
                     <button
+                      className="captcha-action-btn captcha-claim-btn"
                       type="button"
                       onClick={
                         handleClaim
@@ -2127,6 +2137,7 @@ function App() {
                     </button>
 
                     <button
+                      className="captcha-action-btn captcha-no-thanks-btn"
                       type="button"
                       onClick={
                         handleNoThanks
